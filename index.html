@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRACKING - GOD MODE v3 (Easy Shaka)</title>
+
+    <link rel="icon" type="image/png" href="https://i.ibb.co.com/wZBg3Vxx/Gemini-Generated-Image-w6a44zw6a44zw6a4.png">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            cursor: none;
+            font-family: 'Courier New', monospace;
+        }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        /* UI Cyberpunk */
+        #hud {
+            position: absolute; top: 30px; left: 30px; color: #00ffcc;
+            font-family: 'Courier New', monospace; z-index: 100; pointer-events: none;
+            text-shadow: 0 0 10px #00ffcc; background: rgba(0,0,0,0.6); padding: 15px;
+            border-left: 3px solid #00ffcc; border-radius: 0 10px 10px 0;
+            backdrop-filter: blur(4px);
+        }
+        #video-preview {
+            position: absolute; bottom: 20px; right: 20px; width: 200px;
+            border: 2px solid #ff00ff; border-radius: 15px; transform: scaleX(-1);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3); opacity: 0.7;
+            object-fit: cover;
+        }
+        #mode-glow {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            mix-blend-mode: screen;
+            opacity: 0.35;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(0,255,255,0.16), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,0,180,0.14), transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(0,100,255,0.1), transparent 60%);
+            animation: pulseGlow 4.5s ease-in-out infinite;
+        }
+        #reticle {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            left: 50%;
+            top: 50%;
+            margin-left: -60px;
+            margin-top: -60px;
+            border: 1px solid rgba(0, 255, 204, 0.45);
+            border-radius: 50%;
+            box-shadow: inset 0 0 18px rgba(0, 255, 204, 0.25), 0 0 25px rgba(0, 255, 204, 0.18);
+            pointer-events: none;
+            z-index: 90;
+            transition: transform 0.12s linear, border-color 0.3s ease;
+        }
+        #reticle::before,
+        #reticle::after {
+            content: "";
+            position: absolute;
+            inset: 16px;
+            border: 1px dashed rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            animation: spin 8s linear infinite;
+        }
+        #reticle::after {
+            inset: 28px;
+            animation-direction: reverse;
+            animation-duration: 5s;
+        }
+        .flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; pointer-events: none; opacity: 0; z-index: 150;
+            transition: opacity 0.1s ease-out;
+        }
+        /* Scanline effect */
+        body::after {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.08); opacity: 0.46; }
+        }
+        @keyframes spin {
+            from { transform: rotate(0); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        >> CORE: OVERLOADED<br>
+        >> SIGNAL: <span id="sig-status">SCANNING...</span><br>
+        >> ACTIVE_DRIVE: <span id="mode-status">FIKRI_SYSTEM</span><br>
+        <small style="color: #aaa;">[TRY SHAKA 🤙 TO SEE MORE]</small>
+    </div>
+
+    <div id="mode-glow"></div>
+    <div id="reticle"></div>
+    <div id="flash-screen" class="flash"></div>
+    <div id="canvas-container"></div>
+    <video id="video-preview" autoplay playsinline muted></video>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <script>
+        let scene, camera, renderer, particles, starfield, auraPoints, rainPoints;
+        let targetX = 0, targetY = 0, curX = 0, curY = 0;
+        let particleData = [];
+        let auraData = [];
+        let rainData = [];
+        let currentText = "FIKRI TRI ARDIANSYAH";
+        let lastGesture = "";
+
+        const COLOR_THEMES = {
+            normal: [0x00ffcc, 0x00ffff, 0x0099ff], // Cyan/Blue
+            gelot: [0xff0055, 0xff7700, 0xffff00, 0x00ff00], // Fire/Rainbow
+            love: [0xff0066, 0xff3399, 0xffffff, 0xff0000] // Pink/Red
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            // Fog for depth
+            scene.fog = new THREE.FogExp2(0x000000, 0.0008);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
+            camera.position.z = 1000;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Create Starfield Background
+            const bgGeo = new THREE.BufferGeometry();
+            const bgPos = [];
+            for(let i=0; i<3000; i++) bgPos.push((Math.random()-0.5)*5000, (Math.random()-0.5)*5000, (Math.random()-0.5)*3000);
+            bgGeo.setAttribute('position', new THREE.Float32BufferAttribute(bgPos, 3));
+            starfield = new THREE.Points(bgGeo, new THREE.PointsMaterial({color: 0x555555, size: 1.5}));
+            scene.add(starfield);
+
+            createAuraField();
+            createMeteorRain();
+
+            morphText(currentText, 'normal');
+            setupMediaPipe();
+            animate();
+        }
+
+        function createAuraField() {
+            const count = 5200;
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(count * 3);
+            const col = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 250 + Math.random() * 950;
+                const height = (Math.random() - 0.5) * 1300;
+                pos[i * 3] = Math.cos(angle) * radius;
+                pos[i * 3 + 1] = height;
+                pos[i * 3 + 2] = Math.sin(angle) * radius;
+
+                const color = new THREE.Color().setHSL(0.5 + Math.random() * 0.2, 0.9, 0.55);
+                col[i * 3] = color.r;
+                col[i * 3 + 1] = color.g;
+                col[i * 3 + 2] = color.b;
+
+                auraData.push({ angle, radius, speed: 0.0008 + Math.random() * 0.0015, bob: Math.random() * Math.PI * 2 });
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+            auraPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+                size: 2.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.45,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            scene.add(auraPoints);
+        }
+
+        function createMeteorRain() {
+            const count = 1100;
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(count * 3);
+            const col = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                const x = (Math.random() - 0.5) * 3200;
+                const y = (Math.random() - 0.5) * 2400;
+                const z = (Math.random() - 0.5) * 1800;
+                pos.set([x, y, z], i * 3);
+                col.set([0.8 + Math.random() * 0.2, 0.45 + Math.random() * 0.4, 1], i * 3);
+                rainData.push({ vx: -2 - Math.random() * 5, vy: -1 - Math.random() * 5, vz: -1 - Math.random() * 3 });
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+            rainPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+                size: 1.8,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.55,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            scene.add(rainPoints);
+        }
+
+        // --- THE MAGIC MORPH ENGINE ---
+        function morphText(text, theme) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1600; canvas.height = 400;
+
+            const fontSize = theme === 'love' ? 120 : (theme === 'gelot' ? 130 : 100);
+            ctx.font = `bold ${fontSize}px Arial Black`;
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 800, 200);
+
+            const imageData = ctx.getImageData(0, 0, 1600, 400).data;
+            const newPositions = [];
+            
+            // Sample points from text
+            for (let y = 0; y < 400; y += 4) { // Tighter sampling
+                for (let x = 0; x < 1600; x += 4) {
+                    if (imageData[(y * 1600 + x) * 4 + 3] > 128) {
+                        newPositions.push({
+                            x: (x - 800) * 1.3,
+                            y: (200 - y) * 1.3,
+                            z: 0
+                        });
+                    }
+                }
+            }
+
+            // Sync particles
+            if (!particles) {
+                // Initial creation
+                const geo = new THREE.BufferGeometry();
+                const posArr = new Float32Array(18000 * 3); // More particles
+                const colArr = new Float32Array(18000 * 3);
+
+                for (let i = 0; i < 18000; i++) {
+                    const target = newPositions[i % newPositions.length];
+                    posArr[i*3] = (Math.random()-0.5)*2000; 
+                    posArr[i*3+1] = (Math.random()-0.5)*2000; 
+                    posArr[i*3+2] = (Math.random()-0.5)*2000; // Start scattered
+                    
+                    const c = new THREE.Color(COLOR_THEMES[theme][i % COLOR_THEMES[theme].length]);
+                    colArr[i*3] = c.r; colArr[i*3+1] = c.g; colArr[i*3+2] = c.b;
+
+                    particleData.push({
+                        vx: 0, vy: 0, vz: 0,
+                        tx: target.x, ty: target.y, tz: 0,
+                        baseColor: c.clone()
+                    });
+                }
+
+                geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+                geo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+                particles = new THREE.Points(geo, new THREE.PointsMaterial({ size: 3, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8 }));
+                scene.add(particles);
+            } else {
+                // Morph existing particles
+                const flash = document.getElementById('flash-screen');
+                flash.style.opacity = "0.6";
+                setTimeout(() => flash.style.opacity = "0", 150);
+
+                const colorAttr = particles.geometry.attributes.color;
+                for (let i = 0; i < particleData.length; i++) {
+                    const target = newPositions[i % newPositions.length];
+                    particleData[i].tx = target.x;
+                    particleData[i].ty = target.y;
+                    
+                    // Explosion effect
+                    particleData[i].vx = (Math.random()-0.5) * 200;
+                    particleData[i].vy = (Math.random()-0.5) * 200;
+                    particleData[i].vz = (Math.random()-0.5) * 200;
+
+                    const c = new THREE.Color(COLOR_THEMES[theme][i % COLOR_THEMES[theme].length]);
+                    colorAttr.setXYZ(i, c.r, c.g, c.b);
+                }
+                colorAttr.needsUpdate = true;
+            }
+        }
+
+        // --- GESTURE DETECTION (UPDATED FOR EASIER SHAKA) ---
+        function onResults(results) {
+            const sig = document.getElementById('sig-status');
+            const mod = document.getElementById('mode-status');
+            const reticle = document.getElementById('reticle');
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                sig.innerText = "LOCKED"; sig.style.color = "#00ffcc";
+                const lm = results.multiHandLandmarks[0];
+                
+                // Palm position tracking
+                targetX = (0.5 - lm[9].x) * 1800; // Wider movement range
+                targetY = (0.5 - lm[9].y) * 1200;
+                // Immediate response: remove movement latency when hand position updates
+                curX = targetX;
+                curY = targetY;
+                reticle.style.transform = `translate(${targetX * 0.08}px, ${-targetY * 0.08}px)`;
+
+                // Distance Helper
+                const d = (p1, p2) => Math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2);
+                
+                // Hand size reference (Wrist to Middle Finger Knuckle)
+                const handSize = d(lm[0], lm[9]); 
+
+                // --- LOGIC 1: SHAKA (GELOT) ---
+                // 1. Cek jarak Ibu Jari (4) dan Kelingking (20)
+                //    Kita turunkan threshold dari 2.5 menjadi 1.8 agar lebih mudah.
+                const thumbPinkyDist = d(lm[4], lm[20]);
+                const isWide = thumbPinkyDist > handSize * 1.8;
+
+                // 2. Cek apakah ini bentuk kepalan tangan (bukan tangan terbuka)
+                //    Bandingkan jarak pergelangan tangan (0) ke ujung jari tengah (12) vs ke ujung kelingking (20).
+                //    Di pose Shaka, kelingking harus jauh lebih menjauh dari pergelangan tangan daripada jari tengah.
+                const wristToPinky = d(lm[0], lm[20]);
+                const wristToMiddle = d(lm[0], lm[12]);
+                const isFistShape = wristToMiddle < wristToPinky * 0.85; // Jari tengah lebih pendek jaraknya
+                
+                const shaka = isWide && isFistShape;
+
+                // --- LOGIC 2: LOVE (PINCH) ---
+                //    Jarak Ibu Jari (4) dan Telunjuk (8) harus sangat dekat
+                const thumbIndexDist = d(lm[4], lm[8]);
+                const heart = thumbIndexDist < handSize * 0.3; // Sangat dekat
+
+                // --- TRIGGER ACTIONS ---
+                if (shaka && lastGesture !== "SHAKA") {
+                    lastGesture = "SHAKA";
+                    mod.innerText = "GELOT_MODE_OVERRIDE";
+                    mod.style.color = "#ffaa00";
+                    reticle.style.borderColor = "rgba(255,170,0,0.9)";
+                    morphText("OPO GELOT A", "gelot");
+                    
+                    // Reset after 4 seconds
+                    setTimeout(() => { 
+                        if(lastGesture === "SHAKA") { // Check if still active to prevent overriding
+                            lastGesture = ""; 
+                            mod.innerText = "FIKRI_SYSTEM"; 
+                            mod.style.color = "#00ffcc";
+                            reticle.style.borderColor = "rgba(0,255,204,0.45)";
+                            morphText("FIKRI TRI ARDIANSYAH", "normal"); 
+                        }
+                    }, 4000);
+                } else if (heart && lastGesture !== "LOVE") {
+                    lastGesture = "LOVE";
+                    mod.innerText = "LOVE_HEART_LOCKED";
+                    mod.style.color = "#ff0066";
+                    reticle.style.borderColor = "rgba(255,0,120,0.9)";
+                    morphText("LOVE YOU", "love");
+                    spawnLoveBurst();
+                    
+                    setTimeout(() => { 
+                        if(lastGesture === "LOVE") {
+                            lastGesture = ""; 
+                            mod.innerText = "FIKRI_SYSTEM"; 
+                            mod.style.color = "#00ffcc";
+                            reticle.style.borderColor = "rgba(0,255,204,0.45)";
+                            morphText("FIKRI TRI ARDIANSYAH", "normal"); 
+                        }
+                    }, 4000);
+                }
+            } else {
+                sig.innerText = "LOST SIGNAL"; sig.style.color = "red";
+                reticle.style.borderColor = "rgba(255,0,0,0.6)";
+            }
+        }
+
+        function spawnLoveBurst() {
+            for(let i=0; i<40; i++) {
+                const geo = new THREE.IcosahedronGeometry(Math.random()*20, 0);
+                const mat = new THREE.MeshBasicMaterial({color: 0xff3399, wireframe: true});
+                const m = new THREE.Mesh(geo, mat);
+                m.position.set(curX, curY, 0);
+                scene.add(m);
+                const v = { x: (Math.random()-0.5)*30, y: (Math.random()-0.5)*30, z: (Math.random()-0.5)*30 };
+                
+                function animateLove() {
+                    m.position.x += v.x; 
+                    m.position.y += v.y;
+                    m.position.z += v.z;
+                    m.rotation.x += 0.2; m.rotation.y += 0.2;
+                    m.scale.multiplyScalar(0.92);
+                    if(m.scale.x > 0.1) requestAnimationFrame(animateLove);
+                    else {
+                        scene.remove(m);
+                        m.geometry.dispose();
+                        m.material.dispose();
+                    }
+                }
+                animateLove();
+            }
+        }
+
+        function setupMediaPipe() {
+            const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+            hands.setOptions({ 
+                maxNumHands: 1, 
+                modelComplexity: 0, 
+                minDetectionConfidence: 0.5, // Respons lebih cepat dengan threshold lebih longgar
+                minTrackingConfidence: 0.5 
+            });
+            hands.onResults(onResults);
+            const cam = new Camera(document.getElementById('video-preview'), {
+                onFrame: async () => { await hands.send({image: document.getElementById('video-preview')}); },
+                width: 640, height: 480
+            });
+            cam.start();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Instant hand-following (no smoothing delay)
+            curX = targetX;
+            curY = targetY;
+
+            if (particles) {
+                const posAttr = particles.geometry.attributes.position;
+                for (let i = 0; i < particleData.length; i++) {
+                    const p = particleData[i];
+                    
+                    // Spring Physics
+                    // Particles want to go to: (Text Shape Position) + (Hand Offset)
+                    const targetGlobalX = p.tx + curX;
+                    const targetGlobalY = p.ty + curY;
+                    const targetGlobalZ = p.tz;
+
+                    const ax = (targetGlobalX - posAttr.array[i*3]) * 0.06; // Increased tension for snappier feel
+                    const ay = (targetGlobalY - posAttr.array[i*3+1]) * 0.06;
+                    const az = (targetGlobalZ - posAttr.array[i*3+2]) * 0.06;
+
+                    p.vx = (p.vx + ax) * 0.88; // Damping
+                    p.vy = (p.vy + ay) * 0.88;
+                    p.vz = (p.vz + az) * 0.88;
+
+                    posAttr.array[i*3] += p.vx;
+                    posAttr.array[i*3+1] += p.vy;
+                    posAttr.array[i*3+2] += p.vz;
+                }
+                posAttr.needsUpdate = true;
+                
+                // Subtle rotation of the whole particle system based on movement
+                particles.rotation.y = curX * 0.0002;
+                particles.rotation.x = -curY * 0.0002;
+            }
+
+            if (auraPoints) {
+                const arr = auraPoints.geometry.attributes.position.array;
+                for (let i = 0; i < auraData.length; i++) {
+                    const a = auraData[i];
+                    a.angle += a.speed;
+                    a.bob += 0.015;
+                    arr[i * 3] = Math.cos(a.angle) * (a.radius + curX * 0.08);
+                    arr[i * 3 + 1] += Math.sin(a.bob) * 0.6;
+                    arr[i * 3 + 2] = Math.sin(a.angle) * (a.radius + curY * 0.08);
+                }
+                auraPoints.geometry.attributes.position.needsUpdate = true;
+                auraPoints.rotation.y += 0.0009;
+            }
+
+            if (rainPoints) {
+                const arr = rainPoints.geometry.attributes.position.array;
+                for (let i = 0; i < rainData.length; i++) {
+                    const r = rainData[i];
+                    arr[i * 3] += r.vx;
+                    arr[i * 3 + 1] += r.vy;
+                    arr[i * 3 + 2] += r.vz;
+
+                    if (arr[i * 3 + 1] < -1400 || arr[i * 3] < -1800) {
+                        arr[i * 3] = 1800;
+                        arr[i * 3 + 1] = 1300;
+                        arr[i * 3 + 2] = (Math.random() - 0.5) * 1800;
+                    }
+                }
+                rainPoints.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // Move stars slowly
+            starfield.rotation.z += 0.0005;
+            starfield.rotation.y += 0.00015;
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
