@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACKING - GOD MODE v3 (Easy Shaka)</title>
+    <title>Fikri ❤️ Zefanya - Romantic Gesture Universe</title>
 
     <link rel="icon" type="image/png" href="https://i.ibb.co.com/wZBg3Vxx/Gemini-Generated-Image-w6a44zw6a44zw6a4.png">
     <style>
@@ -29,6 +29,40 @@
             border: 2px solid #ff00ff; border-radius: 15px; transform: scaleX(-1);
             box-shadow: 0 0 20px rgba(255, 0, 255, 0.3); opacity: 0.7;
             object-fit: cover;
+        }
+        #story-card {
+            position: absolute;
+            top: 26px;
+            right: 26px;
+            z-index: 120;
+            width: min(400px, calc(100vw - 70px));
+            color: #fff;
+            padding: 18px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: linear-gradient(135deg, rgba(255, 0, 140, 0.32), rgba(84, 0, 255, 0.35));
+            box-shadow: 0 0 35px rgba(255, 0, 170, 0.25), inset 0 0 16px rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            animation: floatingCard 5s ease-in-out infinite;
+        }
+        #story-title {
+            margin: 0 0 10px;
+            font-size: 22px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+        }
+        #story-message {
+            margin: 0;
+            line-height: 1.45;
+            color: #ffeef8;
+            font-family: "Trebuchet MS", sans-serif;
+        }
+        #story-page {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #ffe27a;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
         }
         #mode-glow {
             position: absolute;
@@ -93,15 +127,26 @@
             from { transform: rotate(0); }
             to { transform: rotate(360deg); }
         }
+        @keyframes floatingCard {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-7px); }
+        }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        >> CORE: OVERLOADED<br>
+        >> CORE: ROMANCE_OVERDRIVE<br>
         >> SIGNAL: <span id="sig-status">SCANNING...</span><br>
-        >> ACTIVE_DRIVE: <span id="mode-status">FIKRI_SYSTEM</span><br>
-        <small style="color: #aaa;">[TRY SHAKA 🤙 TO SEE MORE]</small>
+        >> ACTIVE_DRIVE: <span id="mode-status">FIKRI & ZEFANYA FOREVERR</span><br>
+        <small style="color: #aaa;">[GANTI EMOTE TANGAN BUAT BUKA HALAMAN CINTA]</small>
+    </div>
+    <div id="story-card">
+        <h2 id="story-title">✨ Fikri & Zefanya Foreverr</h2>
+        <p id="story-message">
+            Setiap detik bareng kamu itu rumah. Every second with you feels like home, Zefanya.
+        </p>
+        <div id="story-page">Page 1 / 8 • Gesture: 🤟 SHAKA</div>
     </div>
 
     <div id="mode-glow"></div>
@@ -120,13 +165,94 @@
         let particleData = [];
         let auraData = [];
         let rainData = [];
-        let currentText = "FIKRI TRI ARDIANSYAH";
+        let currentText = "FIKRI & ZEFANYA FOREVERR";
         let lastGesture = "";
+        let currentPage = "SHAKA";
 
         const COLOR_THEMES = {
-            normal: [0x00ffcc, 0x00ffff, 0x0099ff], // Cyan/Blue
-            gelot: [0xff0055, 0xff7700, 0xffff00, 0x00ff00], // Fire/Rainbow
-            love: [0xff0066, 0xff3399, 0xffffff, 0xff0000] // Pink/Red
+            normal: [0xff66cc, 0xff99dd, 0x99ddff],
+            shaka: [0xff5ebc, 0xff9770, 0xffe066],
+            love: [0xff2e90, 0xff7bbf, 0xffffff, 0xff2e63],
+            peace: [0x64d2ff, 0x7cf7ff, 0xb8a1ff],
+            fist: [0xff8364, 0xffc36f, 0xfff1a8],
+            palm: [0x6ef3c5, 0x65d9ff, 0xe8ff9a],
+            thumbs: [0x9cff57, 0x8dffcf, 0xf4ff66],
+            ok: [0xff68d8, 0xbba8ff, 0x90c7ff],
+            rock: [0xff3b75, 0xfd9bff, 0xffffff]
+        };
+        const GESTURE_PAGES = {
+            SHAKA: {
+                page: "1 / 8",
+                emote: "🤟 SHAKA",
+                mode: "SHAKA_LOVE_WAVE",
+                theme: "shaka",
+                text: "FIKRI ❤ ZEFANYA",
+                title: "🤟 Vibes of Forever",
+                message: "Kamu itu lagu favoritku yang nggak pernah bikin bosan. You are my forever favorite rhythm, Zefanya."
+            },
+            LOVE: {
+                page: "2 / 8",
+                emote: "🫶 LOVE PINCH",
+                mode: "HEART_SYNC",
+                theme: "love",
+                text: "LOVE YOU ZEFA",
+                title: "🫶 Heart Locked",
+                message: "Jantungku pilih kamu setiap hari. My heart keeps choosing you every single day."
+            },
+            PEACE: {
+                page: "3 / 8",
+                emote: "✌️ PEACE",
+                mode: "PEACEFUL_ROMANCE",
+                theme: "peace",
+                text: "CALM LOVE",
+                title: "✌️ Calm but Deep",
+                message: "Di pelukanmu aku tenang. In your arms, I find peace and endless warmth."
+            },
+            FIST: {
+                page: "4 / 8",
+                emote: "✊ FIST",
+                mode: "LOYALTY_MODE",
+                theme: "fist",
+                text: "STRONG TOGETHER",
+                title: "✊ Promise Mode",
+                message: "Aku bakal genggam hubungan ini sekuat-kuatnya. We stay strong, side by side, no matter what."
+            },
+            PALM: {
+                page: "5 / 8",
+                emote: "🖐️ OPEN PALM",
+                mode: "OPEN_HEART_CHANNEL",
+                theme: "palm",
+                text: "OPEN HEART",
+                title: "🖐️ Open Heart",
+                message: "Aku selalu jujur dan terbuka buat kamu, Zefanya. My love for you is open, pure, and real."
+            },
+            THUMBS: {
+                page: "6 / 8",
+                emote: "👍 THUMBS UP",
+                mode: "APPROVED_BY_LOVE",
+                theme: "thumbs",
+                text: "YOU'RE THE BEST",
+                title: "👍 Best Choice Ever",
+                message: "Pacarku namanya Zefanya, dan itu keputusan terbaik dalam hidupku. Falling for you is my best life choice."
+            },
+            OK: {
+                page: "7 / 8",
+                emote: "👌 OK",
+                mode: "PERFECT_MATCH",
+                theme: "ok",
+                text: "PERFECT MATCH",
+                title: "👌 Perfectly Us",
+                message: "Kita bukan sekadar cocok, kita sempurna saat bersama. You and me are written in the same stars."
+            },
+            ROCK: {
+                page: "8 / 8",
+                emote: "🤘 ROCK",
+                mode: "FOREVERR_SIGNAL",
+                theme: "rock",
+                text: "FOREVERR",
+                title: "🤘 Fikri & Zefanya Foreverr",
+                message: "FIKRI & ZEFANYA FOREVERR — cinta kita estetik, berwarna, dan nggak ada tamatnya. Forever and always."
+            }
         };
 
         function init() {
@@ -154,8 +280,20 @@
             createMeteorRain();
 
             morphText(currentText, 'normal');
+            setStoryPage("SHAKA");
             setupMediaPipe();
             animate();
+        }
+
+        function setStoryPage(key) {
+            const page = GESTURE_PAGES[key];
+            if (!page) return;
+            currentPage = key;
+            document.getElementById("story-title").innerText = page.title;
+            document.getElementById("story-message").innerText = page.message;
+            document.getElementById("story-page").innerText = `Page ${page.page} • Gesture: ${page.emote}`;
+            document.getElementById("mode-status").innerText = page.mode;
+            morphText(page.text, page.theme);
         }
 
         function createAuraField() {
@@ -227,7 +365,7 @@
             const ctx = canvas.getContext('2d');
             canvas.width = 1600; canvas.height = 400;
 
-            const fontSize = theme === 'love' ? 120 : (theme === 'gelot' ? 130 : 100);
+            const fontSize = theme === 'love' ? 120 : (theme === 'shaka' ? 130 : 100);
             ctx.font = `bold ${fontSize}px Arial Black`;
             ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
@@ -263,7 +401,8 @@
                     posArr[i*3+1] = (Math.random()-0.5)*2000; 
                     posArr[i*3+2] = (Math.random()-0.5)*2000; // Start scattered
                     
-                    const c = new THREE.Color(COLOR_THEMES[theme][i % COLOR_THEMES[theme].length]);
+                    const palette = COLOR_THEMES[theme] || COLOR_THEMES.normal;
+                    const c = new THREE.Color(palette[i % palette.length]);
                     colArr[i*3] = c.r; colArr[i*3+1] = c.g; colArr[i*3+2] = c.b;
 
                     particleData.push({
@@ -294,11 +433,23 @@
                     particleData[i].vy = (Math.random()-0.5) * 200;
                     particleData[i].vz = (Math.random()-0.5) * 200;
 
-                    const c = new THREE.Color(COLOR_THEMES[theme][i % COLOR_THEMES[theme].length]);
+                    const palette = COLOR_THEMES[theme] || COLOR_THEMES.normal;
+                    const c = new THREE.Color(palette[i % palette.length]);
                     colorAttr.setXYZ(i, c.r, c.g, c.b);
                 }
                 colorAttr.needsUpdate = true;
             }
+        }
+
+        function triggerGesture(key, reticle, modeColor) {
+            if (lastGesture === key) return;
+            lastGesture = key;
+            reticle.style.borderColor = modeColor;
+            setStoryPage(key);
+            if (key === "LOVE") spawnLoveBurst();
+            setTimeout(() => {
+                if (lastGesture === key) lastGesture = "";
+            }, 1300);
         }
 
         // --- GESTURE DETECTION (UPDATED FOR EASIER SHAKA) ---
@@ -325,61 +476,47 @@
                 // Hand size reference (Wrist to Middle Finger Knuckle)
                 const handSize = d(lm[0], lm[9]); 
 
-                // --- LOGIC 1: SHAKA (GELOT) ---
-                // 1. Cek jarak Ibu Jari (4) dan Kelingking (20)
-                //    Kita turunkan threshold dari 2.5 menjadi 1.8 agar lebih mudah.
+                const isUp = (tip, pip, mcp) => lm[tip].y < lm[pip].y && lm[pip].y < lm[mcp].y;
+                const indexUp = isUp(8, 6, 5);
+                const middleUp = isUp(12, 10, 9);
+                const ringUp = isUp(16, 14, 13);
+                const pinkyUp = isUp(20, 18, 17);
+                const thumbExtended = d(lm[4], lm[2]) > handSize * 0.55;
                 const thumbPinkyDist = d(lm[4], lm[20]);
-                const isWide = thumbPinkyDist > handSize * 1.8;
-
-                // 2. Cek apakah ini bentuk kepalan tangan (bukan tangan terbuka)
-                //    Bandingkan jarak pergelangan tangan (0) ke ujung jari tengah (12) vs ke ujung kelingking (20).
-                //    Di pose Shaka, kelingking harus jauh lebih menjauh dari pergelangan tangan daripada jari tengah.
-                const wristToPinky = d(lm[0], lm[20]);
-                const wristToMiddle = d(lm[0], lm[12]);
-                const isFistShape = wristToMiddle < wristToPinky * 0.85; // Jari tengah lebih pendek jaraknya
-                
-                const shaka = isWide && isFistShape;
-
-                // --- LOGIC 2: LOVE (PINCH) ---
-                //    Jarak Ibu Jari (4) dan Telunjuk (8) harus sangat dekat
                 const thumbIndexDist = d(lm[4], lm[8]);
-                const heart = thumbIndexDist < handSize * 0.3; // Sangat dekat
+                const heart = thumbIndexDist < handSize * 0.28;
+                const shaka = thumbExtended && pinkyUp && !indexUp && !middleUp && !ringUp && thumbPinkyDist > handSize * 1.2;
+                const peace = indexUp && middleUp && !ringUp && !pinkyUp;
+                const fist = !indexUp && !middleUp && !ringUp && !pinkyUp && !thumbExtended;
+                const palm = indexUp && middleUp && ringUp && pinkyUp && thumbExtended;
+                const thumbs = thumbExtended && !indexUp && !middleUp && !ringUp && !pinkyUp && lm[4].y < lm[8].y;
+                const ok = thumbIndexDist < handSize * 0.22 && middleUp && ringUp && pinkyUp;
+                const rock = indexUp && !middleUp && !ringUp && pinkyUp;
 
-                // --- TRIGGER ACTIONS ---
-                if (shaka && lastGesture !== "SHAKA") {
-                    lastGesture = "SHAKA";
-                    mod.innerText = "GELOT_MODE_OVERRIDE";
-                    mod.style.color = "#ffaa00";
-                    reticle.style.borderColor = "rgba(255,170,0,0.9)";
-                    morphText("OPO GELOT A", "gelot");
-                    
-                    // Reset after 4 seconds
-                    setTimeout(() => { 
-                        if(lastGesture === "SHAKA") { // Check if still active to prevent overriding
-                            lastGesture = ""; 
-                            mod.innerText = "FIKRI_SYSTEM"; 
-                            mod.style.color = "#00ffcc";
-                            reticle.style.borderColor = "rgba(0,255,204,0.45)";
-                            morphText("FIKRI TRI ARDIANSYAH", "normal"); 
-                        }
-                    }, 4000);
-                } else if (heart && lastGesture !== "LOVE") {
-                    lastGesture = "LOVE";
-                    mod.innerText = "LOVE_HEART_LOCKED";
-                    mod.style.color = "#ff0066";
-                    reticle.style.borderColor = "rgba(255,0,120,0.9)";
-                    morphText("LOVE YOU", "love");
-                    spawnLoveBurst();
-                    
-                    setTimeout(() => { 
-                        if(lastGesture === "LOVE") {
-                            lastGesture = ""; 
-                            mod.innerText = "FIKRI_SYSTEM"; 
-                            mod.style.color = "#00ffcc";
-                            reticle.style.borderColor = "rgba(0,255,204,0.45)";
-                            morphText("FIKRI TRI ARDIANSYAH", "normal"); 
-                        }
-                    }, 4000);
+                if (heart) {
+                    mod.style.color = "#ff4fa6";
+                    triggerGesture("LOVE", reticle, "rgba(255,70,164,0.95)");
+                } else if (shaka) {
+                    mod.style.color = "#ffb75e";
+                    triggerGesture("SHAKA", reticle, "rgba(255,183,94,0.95)");
+                } else if (peace) {
+                    mod.style.color = "#74e4ff";
+                    triggerGesture("PEACE", reticle, "rgba(116,228,255,0.95)");
+                } else if (fist) {
+                    mod.style.color = "#ffc45e";
+                    triggerGesture("FIST", reticle, "rgba(255,196,94,0.95)");
+                } else if (palm) {
+                    mod.style.color = "#6dffcb";
+                    triggerGesture("PALM", reticle, "rgba(109,255,203,0.95)");
+                } else if (thumbs) {
+                    mod.style.color = "#cfff49";
+                    triggerGesture("THUMBS", reticle, "rgba(207,255,73,0.95)");
+                } else if (ok) {
+                    mod.style.color = "#d890ff";
+                    triggerGesture("OK", reticle, "rgba(216,144,255,0.95)");
+                } else if (rock) {
+                    mod.style.color = "#ff68be";
+                    triggerGesture("ROCK", reticle, "rgba(255,104,190,0.95)");
                 }
             } else {
                 sig.innerText = "LOST SIGNAL"; sig.style.color = "red";
